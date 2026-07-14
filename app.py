@@ -43,9 +43,6 @@ def load_pipeline(attention_mode):
     return Pipeline(attention_mode=attention_mode)
 
 
-pipeline = load_pipeline(attention_mode)
-
-
 # =====================================================
 # Title
 # =====================================================
@@ -91,7 +88,9 @@ if run:
 
         try:
 
-            results = pipeline.run(text)
+            with st.spinner("Loading Transformer pipeline (and GloVe embeddings)..."):
+                pipeline = load_pipeline(attention_mode)
+                results = pipeline.run(text)
 
             # =====================================================
             # Summary Metrics
@@ -223,7 +222,7 @@ Modern LLMs instead learn embeddings directly for BPE tokens.
                 pd.DataFrame(norm_table),
                 use_container_width=True
             )
-                        st.divider()
+            st.divider()
 
             # =====================================================
             # Positional Encoding
@@ -301,17 +300,18 @@ Attention decides how much every word should focus on every other word.
             plt.colorbar(im)
 
             words = results["words"]
+            unique_words = [f"{i}: {w}" for i, w in enumerate(words)]
 
             ax.set_xticks(range(len(words)))
             ax.set_yticks(range(len(words)))
 
             ax.set_xticklabels(
-                words,
+                unique_words,
                 rotation=45,
                 ha="right"
             )
 
-            ax.set_yticklabels(words)
+            ax.set_yticklabels(unique_words)
 
             ax.set_xlabel("Keys")
 
@@ -325,8 +325,8 @@ Attention decides how much every word should focus on every other word.
 
             attention_df = pd.DataFrame(
                 results["attention_weights"],
-                index=words,
-                columns=words
+                index=unique_words,
+                columns=unique_words
             )
 
             st.dataframe(
@@ -353,15 +353,15 @@ Attention decides how much every word should focus on every other word.
 
             selected = st.selectbox(
                 "Choose a query token",
-                words
+                unique_words
             )
 
-            idx = words.index(selected)
+            idx = unique_words.index(selected)
 
             attention_scores = results["attention_weights"][idx]
 
             explorer = pd.DataFrame({
-                "Key Word": words,
+                "Key Word": unique_words,
                 "Attention Score": np.round(attention_scores, 4)
             })
 

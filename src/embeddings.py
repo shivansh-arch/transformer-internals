@@ -18,11 +18,11 @@ class Embeddings:
         self.word_vectors = None
 
         try:
-            print("Loading word vectors...")
+            print("Loading word vectors...", flush=True)
             self.word_vectors = api.load("glove-wiki-gigaword-100")
-            print("Loaded!")
+            print("Loaded!", flush=True)
         except Exception as exc:
-            print(f"Could not load GloVe vectors. Using fallback embeddings: {exc}")
+            print(f"Could not load GloVe vectors. Using fallback embeddings: {exc}", flush=True)
 
     def _fallback_vector(self, word):
         digest = hashlib.sha256(word.encode("utf-8")).digest()
