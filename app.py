@@ -6,7 +6,7 @@ from src.pipeline import Pipeline
 
 
 # ----------------------------
-# Cache the pipeline
+# Cache Pipeline
 # ----------------------------
 @st.cache_resource
 def load_pipeline():
@@ -17,49 +17,73 @@ pipeline = load_pipeline()
 
 
 # ----------------------------
-# App Title
+# Title
 # ----------------------------
 st.title("Transformer Visualizer")
-st.write("Visualize Tokenization, Embeddings, Positional Encoding, and Self-Attention.")
+st.write(
+    "Visualize Tokenization, Embeddings, Positional Encoding, and Self-Attention."
+)
 
 
 # ----------------------------
-# Text Input
+# Input
 # ----------------------------
 text = st.text_input("Enter a sentence:")
 
 
 # ----------------------------
-# Run Pipeline
+# Run
 # ----------------------------
 if st.button("Run Pipeline"):
 
-    if text.strip() == "":
+    if not text.strip():
         st.warning("Please enter a sentence.")
+
     else:
 
         try:
+
             results = pipeline.run(text)
 
-            # ===================================
-            # Tokenization
-            # ===================================
-            st.subheader("1. Tokenization")
+            # =====================================================
+            # 1. Tokenization
+            # =====================================================
+            st.subheader("1. Tokenization (BPE)")
 
             token_df = pd.DataFrame({
-                "Token": results["token_pieces"]
+                "BPE Tokens": results["token_pieces"]
             })
 
             st.table(token_df)
 
-            # ===================================
-            # Embeddings
-            # ===================================
+            st.info(results["note"])
+
+            # =====================================================
+            # Word Information
+            # =====================================================
+            st.subheader("Word-Level Tokenization")
+
+            st.write("**Input Words:**")
+            st.write(results["words"])
+
+            st.write("**Embedded Words (found in GloVe):**")
+            st.write(results["embedded_words"])
+
+            if results["skipped_words"]:
+                st.warning(
+                    "Skipped Words (not present in GloVe): "
+                    + ", ".join(results["skipped_words"])
+                )
+
+            # =====================================================
+            # 2. Embeddings
+            # =====================================================
             st.subheader("2. Similar Words (GloVe)")
 
             embedding_table = []
 
-            for word in results["words"]:
+            for word in results["embedded_words"]:
+
                 similar = pipeline.embeddings.find_similar_words(word)
 
                 embedding_table.append({
@@ -71,9 +95,9 @@ if st.button("Run Pipeline"):
 
             st.table(pd.DataFrame(embedding_table))
 
-            # ===================================
-            # Positional Encoding Heatmap
-            # ===================================
+            # =====================================================
+            # 3. Positional Encoding
+            # =====================================================
             st.subheader("3. Positional Encoding")
 
             fig, ax = plt.subplots(figsize=(10, 4))
@@ -91,10 +115,12 @@ if st.button("Run Pipeline"):
 
             st.pyplot(fig)
 
-            # ===================================
-            # Attention Heatmap
-            # ===================================
-            st.subheader("4. Attention Weights")
+            plt.close(fig)
+
+            # =====================================================
+            # 4. Attention
+            # =====================================================
+            st.subheader("4. Self-Attention")
 
             fig, ax = plt.subplots(figsize=(6, 6))
 
@@ -105,16 +131,20 @@ if st.button("Run Pipeline"):
 
             plt.colorbar(im)
 
-            ax.set_xticks(range(len(results["words"])))
-            ax.set_yticks(range(len(results["words"])))
+            words = results["embedded_words"]
 
-            ax.set_xticklabels(results["words"], rotation=45)
-            ax.set_yticklabels(results["words"])
+            ax.set_xticks(range(len(words)))
+            ax.set_yticks(range(len(words)))
+
+            ax.set_xticklabels(words, rotation=45)
+            ax.set_yticklabels(words)
 
             ax.set_xlabel("Keys")
             ax.set_ylabel("Queries")
 
             st.pyplot(fig)
+
+            plt.close(fig)
 
         except Exception as e:
             st.error(f"Error: {e}")
