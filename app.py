@@ -6,145 +6,242 @@ from src.pipeline import Pipeline
 
 
 # ----------------------------
-# Cache Pipeline
+# Page Config
 # ----------------------------
-@st.cache_resource
-def load_pipeline():
-    return Pipeline()
-
-
-pipeline = load_pipeline()
-
-
-# ----------------------------
-# Title
-# ----------------------------
-st.title("Transformer Visualizer")
-st.write(
-    "Visualize Tokenization, Embeddings, Positional Encoding, and Self-Attention."
+st.set_page_config(
+    page_title="Transformer Visualizer",
+    page_icon="🧠",
+    layout="wide",
 )
+
+st.title("🧠 Transformer Visualizer")
+st.markdown(
+    """
+Visualize every stage of a Transformer:
+
+- 🔤 Tokenization
+- 📖 Word Embeddings
+- 📍 Positional Encoding
+- 🎯 Self Attention
+"""
+)
+
+# ----------------------------
+# Sidebar
+# ----------------------------
+st.sidebar.header("Settings")
+
+mode = st.sidebar.radio(
+    "Attention Weights",
+    ["Random", "Trained"]
+)
+
+attention_mode = (
+    "trained"
+    if mode == "Trained"
+    else "random"
+)
+
+
+@st.cache_resource
+def load_pipeline(attention_mode):
+    return Pipeline(attention_mode=attention_mode)
+
+
+pipeline = load_pipeline(attention_mode)
 
 
 # ----------------------------
 # Input
 # ----------------------------
-text = st.text_input("Enter a sentence:")
+text = st.text_input(
+    "Enter a sentence",
+    value="The cat sat on the mat"
+)
 
+run = st.button("Run Visualization")
 
-# ----------------------------
-# Run
-# ----------------------------
-if st.button("Run Pipeline"):
+if run:
 
-    if not text.strip():
-        st.warning("Please enter a sentence.")
+    try:
 
-    else:
+        results = pipeline.run(text)
 
-        try:
+        # ===================================================
+        # TOKENIZATION
+        # ===================================================
 
-            results = pipeline.run(text)
+        st.header("1️⃣ Tokenization")
 
-            # =====================================================
-            # 1. Tokenization
-            # =====================================================
-            st.subheader("1. Tokenization (BPE)")
+        left, right = st.columns(2)
+
+        with left:
+
+            st.subheader("BPE Tokens")
 
             token_df = pd.DataFrame({
-                "BPE Tokens": results["token_pieces"]
+                "Token": results["token_pieces"],
+                "Token ID": results["token_ids"]
             })
 
-            st.table(token_df)
+            st.dataframe(
+                token_df,
+                use_container_width=True
+            )
 
-            st.info(results["note"])
+        with right:
 
-            # =====================================================
-            # Word Information
-            # =====================================================
-            st.subheader("Word-Level Tokenization")
+            st.subheader("Word Tokens")
 
-            st.write("**Input Words:**")
-            st.write(results["words"])
+            word_df = pd.DataFrame({
+                "Word": results["words"]
+            })
 
-            st.write("**Embedded Words (found in GloVe):**")
-            st.write(results["embedded_words"])
+            st.dataframe(
+                word_df,
+                use_container_width=True
+            )
 
-            if results["skipped_words"]:
-                st.warning(
-                    "Skipped Words (not present in GloVe): "
-                    + ", ".join(results["skipped_words"])
+        st.info(results["note"])
+
+        st.divider()
+
+        # ===================================================
+        # EMBEDDINGS
+        # ===================================================
+
+        st.header("2️⃣ Word Embeddings")
+
+        norms = results["embedding_norms"]
+
+        c1, c2 = st.columns(2)
+
+        with c1:
+
+            st.metric(
+                "Embedding Dimension",
+                results["embeddings"].shape[1]
+            )
+
+        with c2:
+
+            st.metric(
+                "Words",
+                len(results["words"])
+            )
+
+        table = []
+
+        for word in results["words"]:
+
+            similar = results["similar_words"][word]
+
+            table.append({
+                "Word": word,
+                "Vector Norm": round(
+                    norms[results["words"].index(word)],
+                    3
+                ),
+                "Similar Words": ", ".join(
+                    [x[0] for x in similar]
                 )
+            })
 
-            # =====================================================
-            # 2. Embeddings
-            # =====================================================
-            st.subheader("2. Similar Words (GloVe)")
+        st.dataframe(
+            pd.DataFrame(table),
+            use_container_width=True
+        )
 
-            embedding_table = []
+        st.divider()
 
-            for word in results["embedded_words"]:
+        # ===================================================
+        # POSITIONAL ENCODING
+        # ===================================================
 
-                similar = pipeline.embeddings.find_similar_words(word)
+        st.header("3️⃣ Positional Encoding")
 
-                embedding_table.append({
-                    "Word": word,
-                    "Similar Words": ", ".join(
-                        [w for w, score in similar]
-                    )
-                })
+        fig, ax = plt.subplots(figsize=(12, 4))
 
-            st.table(pd.DataFrame(embedding_table))
+        im = ax.imshow(
+            results["positional_encoding"],
+            cmap="viridis",
+            aspect="auto"
+        )
 
-            # =====================================================
-            # 3. Positional Encoding
-            # =====================================================
-            st.subheader("3. Positional Encoding")
+        plt.colorbar(im)
 
-            fig, ax = plt.subplots(figsize=(10, 4))
+        ax.set_xlabel("Embedding Dimension")
+        ax.set_ylabel("Token Position")
 
-            im = ax.imshow(
-                results["positional_encoding"],
-                aspect="auto",
-                cmap="viridis"
-            )
+        st.pyplot(fig)
 
-            plt.colorbar(im)
+        plt.close(fig)
 
-            ax.set_xlabel("Embedding Dimension")
-            ax.set_ylabel("Token Position")
+        st.divider()
 
-            st.pyplot(fig)
+        # ===================================================
+        # ATTENTION
+        # ===================================================
 
-            plt.close(fig)
+        st.header("4️⃣ Self Attention")
 
-            # =====================================================
-            # 4. Attention
-            # =====================================================
-            st.subheader("4. Self-Attention")
+        fig, ax = plt.subplots(figsize=(7, 7))
 
-            fig, ax = plt.subplots(figsize=(6, 6))
+        im = ax.imshow(
+            results["attention_weights"],
+            cmap="Blues"
+        )
 
-            im = ax.imshow(
-                results["attention_weights"],
-                cmap="Blues"
-            )
+        plt.colorbar(im)
 
-            plt.colorbar(im)
+        words = results["words"]
 
-            words = results["embedded_words"]
+        ax.set_xticks(range(len(words)))
+        ax.set_yticks(range(len(words)))
 
-            ax.set_xticks(range(len(words)))
-            ax.set_yticks(range(len(words)))
+        ax.set_xticklabels(
+            words,
+            rotation=45,
+            ha="right"
+        )
 
-            ax.set_xticklabels(words, rotation=45)
-            ax.set_yticklabels(words)
+        ax.set_yticklabels(words)
 
-            ax.set_xlabel("Keys")
-            ax.set_ylabel("Queries")
+        ax.set_xlabel("Keys")
+        ax.set_ylabel("Queries")
 
-            st.pyplot(fig)
+        st.pyplot(fig)
 
-            plt.close(fig)
+        plt.close(fig)
 
-        except Exception as e:
-            st.error(f"Error: {e}")
+        st.subheader("Attention Matrix")
+
+        attention_df = pd.DataFrame(
+            results["attention_weights"],
+            index=words,
+            columns=words,
+        )
+
+        st.dataframe(
+            attention_df.round(3),
+            use_container_width=True
+        )
+
+        csv = attention_df.to_csv().encode("utf-8")
+
+        st.download_button(
+            "Download Attention Matrix",
+            csv,
+            "attention_matrix.csv",
+            "text/csv"
+        )
+
+        st.divider()
+
+        # ===================================================
+        # PIPELINE
+        # ===================================================
+
+        st.header("5️⃣ Transformer Pipeline")
+
+        st.markdown("""
