@@ -1,48 +1,60 @@
-import re
-
-import tiktoken as token
+import tiktoken
 
 
 class Tokenizer:
     def __init__(self, encoding_name="cl100k_base"):
-        try:
-            self.enc = token.get_encoding(encoding_name)
-        except Exception:
-            self.enc = None
-            self._fallback_vocab = {}
-            self._fallback_inverse_vocab = {}
-
-    def _fallback_tokenize(self, text):
-        return re.findall(r"\w+|[^\w\s]|\s+", text)
-
-    def encode(self, text):
-        if self.enc is not None:
-            return self.enc.encode(text)
-
-        token_ids = []
-        for piece in self._fallback_tokenize(text):
-            if piece not in self._fallback_vocab:
-                token_id = len(self._fallback_vocab) + 1
-                self._fallback_vocab[piece] = token_id
-                self._fallback_inverse_vocab[token_id] = piece
-            token_ids.append(self._fallback_vocab[piece])
-        return token_ids
-
-    def decode(self, token_list):
-        if self.enc is not None:
-            return self.enc.decode(token_list)
-
-        return "".join(
-            self._fallback_inverse_vocab.get(token_id, "")
-            for token_id in token_list
-        )
-
-    def get_token_count(self, text):
-        return len(self.encode(text))
+        self.encoding = tiktoken.get_encoding(encoding_name)
 
     def tokenize(self, text):
-        if self.enc is not None:
-            token_ids = self.enc.encode(text)
-            return [self.enc.decode([token_id]) for token_id in token_ids]
+        """
+        Returns BPE token strings.
+        """
+        ids = self.encoding.encode(text)
 
-        return self._fallback_tokenize(text)
+        return [
+            self.encoding.decode([token_id])
+            for token_id in ids
+        ]
+
+    def encode(self, text):
+        """
+        Returns token ids.
+        """
+        return self.encoding.encode(text)
+
+    def decode(self, token_ids):
+        """
+        Decode token ids back to text.
+        """
+        return self.encoding.decode(token_ids)
+
+    def token_info(self, text):
+        """
+        Educational helper.
+        Returns token ids together with decoded token pieces.
+        """
+
+        ids = self.encode(text)
+
+        info = []
+
+        for token_id in ids:
+
+            info.append({
+                "token": self.encoding.decode([token_id]),
+                "token_id": token_id,
+            })
+
+        return info
+
+    def vocab_size(self):
+        """
+        Vocabulary size.
+        """
+        return self.encoding.n_vocab
+
+    def special_tokens(self):
+        """
+        Returns all special tokens.
+        """
+        return self.encoding.special_tokens_set
