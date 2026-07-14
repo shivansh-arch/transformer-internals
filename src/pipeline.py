@@ -7,61 +7,111 @@ from src.attention import Attention
 
 
 class Pipeline:
-    def __init__(self, d_model=100, d_k=64, d_v=64):
+    def __init__(
+        self,
+        d_model=100,
+        d_k=64,
+        d_v=64,
+        attention_mode="random",
+    ):
         self.tokenizer = Tokenizer()
         self.embeddings = Embeddings()
 
         self.positional_encoding = PositionalEncoding(d_model)
-        self.attention = Attention(d_model, d_k, d_v)
+
+        weights_path = (
+            "weights/trained_attention.npz"
+            if attention_mode == "trained"
+            else None
+        )
+
+        self.attention = Attention(
+            d_model=d_model,
+            d_k=d_k,
+            d_v=d_v,
+            weights_path=weights_path,
+        )
 
     def run(self, text):
-        # -------------------------------
-        # 1. BPE tokenization (visualization)
-        # -------------------------------
+
+        # -----------------------------
+        # Stage 1: Tokenization (BPE)
+        # -----------------------------
         token_pieces = self.tokenizer.tokenize(text)
 
-        # -------------------------------
-        # 2. Word tokenization (GloVe)
-        # -------------------------------
+        token_ids = self.tokenizer.encode(text)
+
+        # -----------------------------
+        # Stage 2: Word Tokenization
+        # -----------------------------
         words = text.lower().split()
 
-        embeddings = []
+        embedding_vectors = []
 
         for word in words:
-            vector = self.embeddings.get_vector(word)
-            if vector is not None:
-                embeddings.append(vector)
+            embedding_vectors.append(
+                self.embeddings.get_vector(word)
+            )
 
-        embeddings = np.array(embeddings)
+        embeddings = np.array(embedding_vectors)
 
-        if embeddings.size == 0:
-            raise ValueError("No valid embeddings found.")
-
-        # -------------------------------
-        # 3. Positional Encoding
-        # -------------------------------
+        # -----------------------------
+        # Stage 3: Positional Encoding
+        # -----------------------------
         seq_len = embeddings.shape[0]
+
         positional_encoding = self.positional_encoding.encode(seq_len)
 
-        X = embeddings + positional_encoding
+        transformer_input = embeddings + positional_encoding
 
-        # -------------------------------
-        # 4. Self Attention
-        # -------------------------------
-        attention_output, attention_weights = self.attention.attend(X)
+        # -----------------------------
+        # Stage 4: Attention
+        # -----------------------------
+        attention_output, attention_weights = self.attention.attend(
+            transformer_input
+        )
+
+        # -----------------------------
+        # Stage 5: Similar Words
+        # -----------------------------
+        similar_words = {}
+
+        for word in words:
+            similar_words[word] = self.embeddings.find_similar_words(word)
+
+        # -----------------------------
+        # Stage 6: Statistics
+        # -----------------------------
+        embedding_norms = np.linalg.norm(
+            embeddings,
+            axis=1,
+        )
 
         return {
+            # Tokenization
             "token_pieces": token_pieces,
+            "token_ids": token_ids,
             "words": words,
+
+            # Embeddings
             "embeddings": embeddings,
+            "embedding_norms": embedding_norms,
+            "similar_words": similar_words,
+
+            # Positional Encoding
             "positional_encoding": positional_encoding,
+            "transformer_input": transformer_input,
+
+            # Attention
             "attention_output": attention_output,
             "attention_weights": attention_weights,
+
+            # Explanation
             "note": (
-                "Displayed tokens use BPE tokenization (similar to GPT models), "
-                "while the embedding pipeline uses whole-word GloVe vectors. "
-                "This mismatch exists because GloVe provides embeddings only for "
-                "complete words, whereas modern transformers learn embeddings "
-                "directly for subword tokens."
+                "BPE tokenization is used for visualization, while "
+                "GloVe provides word-level embeddings. Modern LLMs "
+                "learn embeddings directly for BPE/subword tokens, "
+                "whereas this educational project intentionally "
+                "combines both to demonstrate the complete pipeline."
             ),
         }
