@@ -1,37 +1,65 @@
-# 🧠 Transformer Internals (TextScope)
+# 🧠 Transformer Visualizer
 
-> **An interactive visualization tool that explains how Transformer models process text—from tokenization to self-attention.**
+An interactive educational application that visualizes the core building blocks of the Transformer architecture used in modern Large Language Models (LLMs) like GPT, LLaMA, and BERT.
 
-Transformer Internals (TextScope) is an educational project built with **Python** and **Streamlit** that helps users understand what happens inside modern Transformer-based language models.
-
-Instead of treating models like GPT or BERT as black boxes, this project visualizes every major stage of the Transformer pipeline, allowing users to explore tokenization, embeddings, positional encoding, and attention mechanisms interactively.
+Instead of treating Transformers as a black box, this project lets you explore each stage of the pipeline—from tokenization to self-attention—through intuitive visualizations.
 
 ---
 
-# 🚀 Features
+## ✨ Features
 
-* 🔤 Byte Pair Encoding (BPE) Tokenization
-* 🆔 Token IDs Visualization
-* 📖 GloVe Word Embeddings
-* 🔍 Similar Word Search
-* 📍 Positional Encoding Heatmaps
-* 🎯 Self-Attention Visualization
-* 📊 Interactive Heatmaps
-* ⚡ Streamlit-based User Interface
-* 🎓 Designed for Learning Transformer Internals
+### 🔤 1. BPE Tokenization
+
+* Visualizes Byte Pair Encoding (BPE) tokens
+* Displays token IDs
+* Compares BPE tokens with word-level tokens
+* Explains why modern LLMs use subword tokenization
 
 ---
 
-# 🏗️ Project Pipeline
+### 📖 2. Word Embeddings
+
+* Uses **GloVe (100-dimensional)** embeddings
+* Displays semantically similar words
+* Shows embedding statistics
+* Demonstrates how words are represented as vectors
+
+---
+
+### 📍 3. Positional Encoding
+
+* Visualizes sinusoidal positional encodings
+* Interactive heatmap
+* Explains why Transformers need positional information
+
+---
+
+### 🎯 4. Self-Attention
+
+* Implements Scaled Dot-Product Attention from scratch using NumPy
+* Visualizes the attention matrix
+* Displays Query, Key, and Value computations
+* Interactive attention heatmap
+
+---
+
+### 🔍 5. Attention Explorer
+
+Select any word and inspect how much attention it gives to every other word in the sentence.
+
+This provides an intuitive understanding of contextual relationships learned by attention.
+
+---
+
+### 📊 6. Transformer Pipeline
+
+The application visualizes the complete data flow:
 
 ```text
 Input Sentence
       │
       ▼
-Tokenization (BPE)
-      │
-      ▼
-Token IDs
+BPE Tokenization
       │
       ▼
 Word Embeddings
@@ -46,137 +74,113 @@ Query • Key • Value
 Scaled Dot Product Attention
       │
       ▼
-Attention Weights
-      │
-      ▼
-Visualization
+Contextualized Output
 ```
 
 ---
 
-# 📂 Project Structure
+# 🏗️ Project Structure
 
 ```text
-transformer-internals/
+transformer-visualizer/
 │
-├── app.py
+├── app.py                  # Streamlit application
+│
+├── src/
+│   ├── tokenizer.py        # BPE tokenization
+│   ├── embeddings.py       # GloVe embeddings
+│   ├── positional.py       # Positional Encoding
+│   ├── attention.py        # Self Attention
+│   └── pipeline.py         # Pipeline orchestration
+│
+├── weights/
+│
 ├── requirements.txt
-│
-├── modules/
-│   ├── tokenizer.py
-│   ├── embeddings.py
-│   ├── positional_encoding.py
-│   ├── attention.py
-│   └── utils.py
-│
-├── assets/
-│
-├── images/
 │
 └── README.md
 ```
 
-*(Update the structure if your folder names differ.)*
+---
+
+# 🧮 Mathematics
+
+### Query, Key and Value
+
+[
+Q=XW_Q
+]
+
+[
+K=XW_K
+]
+
+[
+V=XW_V
+]
 
 ---
 
-# 🧠 What You'll Learn
+### Attention
 
-This project demonstrates the core concepts behind Transformer models:
-
-## 1️⃣ Tokenization
-
-* Byte Pair Encoding (BPE)
-* Token IDs
-* Vocabulary mapping
+[
+Attention(Q,K,V)=softmax\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+]
 
 ---
 
-## 2️⃣ Word Embeddings
+### Positional Encoding
 
-Visualize how words are converted into dense vectors.
+[
+PE(pos,2i)=\sin\left(\frac{pos}{10000^{2i/d}}\right)
+]
 
-Learn:
-
-* semantic similarity
-* embedding dimensions
-* nearest words
-
----
-
-## 3️⃣ Positional Encoding
-
-Understand how Transformers preserve word order.
-
-Visualize
-
-* sine waves
-* cosine waves
-* positional embedding matrix
+[
+PE(pos,2i+1)=\cos\left(\frac{pos}{10000^{2i/d}}\right)
+]
 
 ---
 
-## 4️⃣ Self Attention
+# 🚀 Getting Started
 
-Explore how each word attends to every other word.
-
-See:
-
-* Query matrix
-* Key matrix
-* Value matrix
-* Attention Scores
-* Softmax
-* Attention Heatmap
-
----
-
-# 📐 Attention Formula
-
-The project demonstrates the fundamental Transformer equation:
-
-```text
-Attention(Q,K,V)
-=
-softmax(QKᵀ / √dk)V
-```
-
-Where:
-
-* **Query (Q)** → What information is this token searching for?
-* **Key (K)** → What information does this token contain?
-* **Value (V)** → What information should this token pass to others?
-
----
-
-# 🛠️ Technologies Used
-
-* Python
-* Streamlit
-* NumPy
-* Matplotlib
-* tiktoken
-* Gensim
-* GloVe Embeddings
-
----
-
-# ⚙️ Installation
-
-Clone the repository
+## Clone the repository
 
 ```bash
-git clone https://github.com/shivansh-arch/transformer-internals.git
-cd transformer-internals
+git clone https://github.com/your-username/transformer-visualizer.git
+
+cd transformer-visualizer
 ```
 
-Install dependencies
+---
+
+## Create a virtual environment
+
+### Windows
+
+```bash
+python -m venv venv
+
+venv\Scripts\activate
+```
+
+### Linux / macOS
+
+```bash
+python3 -m venv venv
+
+source venv/bin/activate
+```
+
+---
+
+## Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Run the application
+---
+
+## Run the application
 
 ```bash
 streamlit run app.py
@@ -186,107 +190,100 @@ streamlit run app.py
 
 # 📸 Screenshots
 
-Add screenshots here for each stage.
+## Tokenization
 
-### Tokenization
-
-```
-images/tokenization.png
-```
+> Add a screenshot here
 
 ---
 
-### Embeddings
+## Word Embeddings
 
-```
-images/embeddings.png
-```
+> Add a screenshot here
 
 ---
 
-### Positional Encoding
+## Positional Encoding
 
-```
-images/position.png
-```
+> Add a screenshot here
 
 ---
 
-### Attention Heatmap
+## Self-Attention Heatmap
 
-```
-images/attention.png
-```
+> Add a screenshot here
 
 ---
 
-# 🎥 Demo
+## Attention Explorer
 
-Add a short GIF demonstrating:
-
-* entering text
-* tokenization
-* embeddings
-* positional encoding
-* attention visualization
-
-A 15–20 second GIF greatly improves the repository.
+> Add a screenshot here
 
 ---
 
-# 🎯 Why This Project?
+# 💻 Technologies Used
 
-Most tutorials explain Transformers mathematically but provide little intuition.
-
-TextScope bridges that gap by letting users see how every stage transforms the input text, making complex concepts easier to understand.
-
----
-
-# 📈 Future Improvements
-
-* Multi-Head Attention Visualization
-* Rotary Positional Embeddings (RoPE)
-* Flash Attention
-* Decoder Block Visualization
-* Feed Forward Network Visualization
-* Residual Connection Animation
-* Layer Normalization Visualization
-* Interactive Q, K, V Editing
-* MiniGPT Integration
-* Support for Multiple Transformer Architectures
+* Python
+* NumPy
+* Streamlit
+* Matplotlib
+* Pandas
+* Gensim
+* tiktoken
 
 ---
 
-# 🎓 Ideal For
+# 🎯 Learning Objectives
 
-* Students learning NLP
-* Deep Learning beginners
-* Machine Learning enthusiasts
-* AI educators
-* Interview preparation
-* Understanding LLM architecture
+This project helps understand:
+
+* Byte Pair Encoding (BPE)
+* Word Embeddings
+* Positional Encoding
+* Query, Key and Value vectors
+* Scaled Dot-Product Attention
+* Attention Heatmaps
+* Contextual Word Representations
 
 ---
 
 # ⚠️ Limitations
 
-* Educational visualization only
-* Uses static GloVe embeddings
-* Demonstrates a simplified Transformer pipeline
-* Not intended for production inference
+This project is designed for **education and visualization**.
+
+It is **not** a complete Transformer implementation and does not perform language generation or model training.
+
+Instead, it focuses on explaining the fundamental concepts that power modern Transformer-based language models.
 
 ---
 
-# 👨‍💻 Author
+# 🔮 Future Improvements
 
-**Shivansh Gupta**
+* Multi-Head Attention visualization
+* Rotary Positional Embeddings (RoPE)
+* RMSNorm visualization
+* SwiGLU visualization
+* Decoder causal masking
+* Layer-by-layer Transformer visualization
+* Interactive attention animations
 
-Computer Science Student | Machine Learning & AI Enthusiast
+---
 
-GitHub: https://github.com/shivansh-arch
+# 🤝 Contributing
+
+Contributions are welcome.
+
+If you'd like to improve the visualizations, optimize performance, or add new Transformer components, feel free to open an issue or submit a pull request.
+
+---
+
+# 📜 License
+
+This project is released under the MIT License.
 
 ---
 
 # ⭐ Support
 
-If you found this project helpful, consider giving it a ⭐ on GitHub. It helps others discover the project and motivates future improvements.
+If you found this project helpful, consider giving it a ⭐ on GitHub.
+
+It helps others discover the project and supports future improvements.
